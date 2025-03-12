@@ -1134,11 +1134,13 @@ void editorMoveCursor(int key) {
     int filerow = E.rowoff+E.cy;
     int filecol = E.coloff+E.cx;
     int rowlen;
+    erow *rowP = &E.row[filerow-1];
     erow *row = (filerow >= E.numrows) ? NULL : &E.row[filerow];
+    erow *rowF = (filerow+1 >= E.numrows) ? NULL : &E.row[filerow+1];
 
     switch(key) {
     case ARROW_LEFT:
-        if (E.cx == 0) {
+        if (E.cx <= 0) {
             if (E.coloff) {
                 E.coloff--;
             } else {
@@ -1156,6 +1158,9 @@ void editorMoveCursor(int key) {
         }
         break;
     case ARROW_RIGHT:
+        if(E.cx < 0){
+            E.cx = 0;
+        }
         if (row && filecol < row->size) {
             if (E.cx == E.screencols-1) {
                 E.coloff++;
@@ -1177,6 +1182,18 @@ void editorMoveCursor(int key) {
             if (E.rowoff) E.rowoff--;
         } else {
             E.cy -= 1;
+            int tabs = 0, offset = 0, n = 0;
+            for (int j = 0; j < filecol; j++){
+                if (row->chars[j] == TAB) {
+                    tabs++;
+                }
+            }
+            for (int j = 0; j < filecol; j++){
+                if (rowP->chars[j] == TAB/* && tabs >= 0*/) {
+                    tabs--;
+                }
+            }
+            E.cx += tabs*(TAB_SIZE-1);
         }
         break;
     case ARROW_DOWN:
@@ -1186,6 +1203,18 @@ void editorMoveCursor(int key) {
             } else {
                 E.cy += 1;
             }
+            int tabs = 0;
+            for (int j = 0; j < filecol; j++){
+                if (row->chars[j] == TAB) {
+                    tabs++;
+                }
+            }
+            for (int j = 0; j < filecol; j++){
+                if (rowF->chars[j] == TAB/* && tabs >= 0*/) {
+                    tabs--;
+                }
+            }
+            E.cx += tabs*(TAB_SIZE-1);
         }
         break;
     }
